@@ -9,7 +9,7 @@ import {
   RAYCASTING_REDNERING_TIME,
   map,
 } from "../data";
-import { degreeToRadians } from "../lib";
+import { degreeToRadians } from "../lib/math";
 
 
 async function time(ms: number) {
@@ -26,28 +26,31 @@ function drawTexture(
   let yIncrementer = (wallHeight * 2) / texture.height;
   let y = SCREEN_HEIGHT / 2 - wallHeight;
   for (let i = 0; i < texture.height; i++) {
-    ctx.strokeStyle = texture.colors[texture.bitmap[i][texturePositionX]];
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-    ctx.lineTo(x, y + (yIncrementer + 0.5));
-    ctx.stroke();
+    drawVerticalLine(
+      ctx,
+      x,
+      y, 
+      y + (yIncrementer + 0.5),
+      texture.colors[texture.bitmap[i][texturePositionX]]
+    )
     y += yIncrementer;
   }
 }
 
-function drawLine(
-  ctx: CanvasRenderingContext2D,
-  x1: number,
-  y1: number,
-  x2: number,
-  y2: number,
+ function drawVerticalLine(
+  ctx: CanvasRenderingContext2D, 
+  x: number, 
+  y1: number, 
+  y2: number, 
   cssColor: string
 ) {
-  ctx.strokeStyle = cssColor;
-  ctx.beginPath();
-  ctx.moveTo(x1, y1);
-  ctx.lineTo(x2, y2);
-  ctx.stroke();
+  ctx.fillStyle = cssColor;
+  ctx.fillRect(
+    x,
+    y1,
+    1,
+    y2 - y1,
+  );
 }
 
 function clear(canvasRef: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
@@ -73,8 +76,8 @@ async function rayCasting(
       y: camera.y,
     };
 
-    const rayCos = Math.cos(degreeToRadians(rayAngle));
-    const raySin = Math.sin(degreeToRadians(rayAngle));
+    const rayCos = Math.cos(degreeToRadians(rayAngle)) * settings.rayStep;
+    const raySin = Math.sin(degreeToRadians(rayAngle)) * settings.rayStep;
 
     let wall = 0;
 
@@ -99,11 +102,10 @@ async function rayCasting(
     );
 
     for (let j = 0; j < incrementWidth; j++) {
-      drawLine(
+      drawVerticalLine(
         ctx,
         rayCount * incrementWidth + j,
         0,
-        rayCount * incrementWidth + j,
         SCREEN_HEIGHT / 2 - wallHeight,
         COLOR_RAYCASTING_CEILING
       );
@@ -116,20 +118,18 @@ async function rayCasting(
           texture
         );
       } else {
-        drawLine(
-        ctx,
-        rayCount * incrementWidth + j,
-        SCREEN_HEIGHT / 2 - wallHeight,
-        rayCount * incrementWidth + j,
-        SCREEN_HEIGHT / 2 + wallHeight,
-        COLOR_RAYCASTING_WALL
-      );
+        drawVerticalLine(
+          ctx,
+          rayCount * incrementWidth + j,
+          SCREEN_HEIGHT / 2 - wallHeight,
+          SCREEN_HEIGHT / 2 + wallHeight,
+          COLOR_RAYCASTING_WALL
+        );
       }
-      drawLine(
+      drawVerticalLine(
         ctx,
         rayCount * incrementWidth + j,
         SCREEN_HEIGHT / 2 + wallHeight,
-        rayCount * incrementWidth + j,
         SCREEN_HEIGHT,
         COLOR_RAYCASTING_FLOOR
       );
@@ -160,6 +160,8 @@ const Renderer: Component<RendererProps> = ({ settings }) => {
     if (!ctx) {
       return;
     }
+
+    ctx.scale(1,1)
 
     clear(canvasRef, ctx);
     await rayCasting(ctx, settings());

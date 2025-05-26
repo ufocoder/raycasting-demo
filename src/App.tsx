@@ -1,13 +1,14 @@
 import { createSignal } from "solid-js";
-import Renderer2D from './components/Renderer2D';
-import Renderer25D from './components/Renderer25D';
-import FormSettings from './components/FormSettings';
+import Renderer2D from "./components/Renderer2D";
+import Renderer25D from "./components/Renderer25D";
+import FormSettings from "./components/FormSettings";
 import { useCameraControls } from "./hooks/useCameraControls";
 import { SCREEN_HEIGHT, SCREEN_WIDTH } from "./data";
 
 const defaultSettings = {
   rays: SCREEN_WIDTH,
-  withTexture: false,
+  rayStep: 0.005,
+  withTexture: true,
   withFisheyeFix: true,
   withInterruption: false,
   camera: {
@@ -15,7 +16,7 @@ const defaultSettings = {
     fov: 45,
     x: 1.5,
     y: 1.5,
-  }
+  },
 };
 
 function App() {
@@ -29,9 +30,22 @@ function App() {
         Raycasting Demo
       </h1>
       <p class="mb-6 text-base text-center font-normal text-gray-500">
-        learn and experiment with raycasting rendering
+        Learn and experiment with raycasting rendering by changing settings or
+        moving camera via{" "}
+        <kbd class="p-1.5 py-1 text-xs font-semibold text-gray-800 bg-gray-100 border border-gray-400 rounded">
+          W
+        </kbd>{" "}
+        <kbd class="p-1.5 py-1 text-xs font-semibold text-gray-800 bg-gray-100 border border-gray-400 rounded">
+          A
+        </kbd>{" "}
+        <kbd class="p-1.5 py-1 text-xs font-semibold text-gray-800 bg-gray-100 border border-gray-400 rounded">
+          S
+        </kbd>{" "}
+        <kbd class="p-1.5 py-1 text-xs font-semibold text-gray-800 bg-gray-100 border border-gray-400 rounded">
+          D
+        </kbd>{" "}
+        keys
       </p>
-
       <div class="flex gap-8">
         <div class="flex flex-col flex-auto items-center">
           <div class="bg-white rounded mt-4 shadow-lg mb-4">

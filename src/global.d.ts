@@ -16,6 +16,7 @@ interface Camera {
 
 interface Settings {
   rays: number;
+  rayStep: number;
   withTexture: boolean;
   withFisheyeFix: boolean;
   withInterruption: boolean;

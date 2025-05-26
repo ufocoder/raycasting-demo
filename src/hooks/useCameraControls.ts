@@ -1,88 +1,110 @@
-import { onCleanup, type Setter } from "solid-js";
-import { degreeToRadians } from "../lib";
+import { createSignal, onCleanup, type Setter } from "solid-js";
+import { degreeToRadians, round } from "../lib/math";
 import { map, MAP_PLAYER_SIZE } from "../data";
+import createLoop from "../lib/loop";
 
 interface UseCameraControlsProps {
-    setSettings: Setter<Settings>;
+  setSettings: Setter<Settings>;
 }
 
 const moveSpeed = 0.1;
-const rotationSpeed = 5;
+const rotationSpeed = 2;
 
-function round(number: number, precision = 2) {
-    return Math.floor(number * Math.pow(10, precision)) / Math.pow(10, precision);
-}
 
 export function useCameraControls({ setSettings }: UseCameraControlsProps) {
+  const [isMoving, setMoving] = createSignal(0);
+  const [isRotating, setRotating] = createSignal(0);
+
+  function moveCamera(camera: Camera, direction: number) {
+    let playerCos = Math.cos(degreeToRadians(camera.angle)) * moveSpeed;
+    let playerSin = Math.sin(degreeToRadians(camera.angle)) * moveSpeed;
+    let newX = camera.x + direction * playerCos;
+    let newY = camera.y + direction * playerSin;
+    let checkX = Math.floor(
+      newX + (direction * playerCos * MAP_PLAYER_SIZE) / 2
+    );
+    let checkY = Math.floor(
+      newY + (direction * playerSin * MAP_PLAYER_SIZE) / 2
+    );
+
+    const canMoveY = map[checkY][Math.floor(camera.x)] == 0;
+    const canMoveX = map[Math.floor(camera.y)][checkX] == 0;
+
+    return {
+      ...camera,
+      x: canMoveX ? newX : round(camera.x),
+      y: canMoveY ? newY : round(camera.y),
+    };
+  }
+
+  function rotateCamera(camera: Camera, direction: number) {
+    return {
+      ...camera,
+      angle: (camera.angle + direction * rotationSpeed + 360) % 360,
+    };
+  }
+
+  const mainLoop = createLoop(function () {
+    if (isMoving()) {
+      setSettings(prev => ({
+        ...prev,
+        camera: moveCamera(prev.camera, isMoving())
+      }));
+    }
+
+    if (isRotating()) {
+      setSettings(prev => ({
+        ...prev,
+        camera: rotateCamera(prev.camera, isRotating())
+      }));
+    }
+  });
+
+  mainLoop.play();
+
   const handleDocumentKeyup = (e: KeyboardEvent) => {
-
-    function moveCamera(camera: Camera, direction: number) {
-        let playerCos = Math.cos(degreeToRadians(camera.angle)) * moveSpeed;
-        let playerSin = Math.sin(degreeToRadians(camera.angle)) * moveSpeed;
-        let newX = camera.x + direction * playerCos;
-        let newY = camera.y + direction * playerSin;
-        let checkX = Math.floor(newX + direction * playerCos * MAP_PLAYER_SIZE / 2);
-        let checkY = Math.floor(newY + direction * playerSin * MAP_PLAYER_SIZE / 2);
-
-        const canMoveY = map[checkY][Math.floor(camera.x)] == 0;
-        const canMoveX = map[Math.floor(camera.y)][checkX] == 0;
-        
-        return {
-            ...camera,
-            x: canMoveX ? newX : round(camera.x),
-            y: canMoveY ? newY : round(camera.y),
-        }
+    if (e.target instanceof HTMLInputElement) {
+      return;
     }
-
-    function rotateCamera(camera: Camera, direction: number) {
-        return {
-            ...camera,
-            angel: (camera.angle + direction * rotationSpeed) % 360
-        }
-    }
-
-    switch(e.code) {
+    switch (e.code) {
       case "KeyW":
       case "ArrowUp":
-        setSettings(prev => ({
-            ...prev,
-            camera: moveCamera(prev.camera, 1)
-        }));
-      break;
+      case "KeyS":
+      case "ArrowDown":
+        setMoving(0);
+        break;
 
       case "KeyA":
       case "ArrowLeft":
-        setSettings(prev => ({
-            ...prev,
-            camera: rotateCamera(prev.camera, 1)
-        }));
-      break;
-
-      case "KeyS":
-      case "ArrowDown":
-        setSettings(prev => ({
-            ...prev,
-            camera: moveCamera(prev.camera, -1)
-        }));
-      break;
-
       case "KeyD":
       case "ArrowRight":
-        setSettings(prev => ({
-            ...prev,
-            camera: rotateCamera(prev.camera, -1)
-        }));
-      break;
+        setRotating(0);
+        break;
     }
   };
 
-
   const handleDocumentKeydown = (e: KeyboardEvent) => {
-    switch(e.code) {
+    if (e.target instanceof HTMLInputElement) {
+      return;
+    }
+    switch (e.code) {
       case "KeyW":
-      case "KeyUp":
+      case "ArrowUp":
+        setMoving(1);
+        return
+      case "KeyS":
+      case "ArrowDown":
+        setMoving(-1);
+        break;
 
-      break;
+      case "KeyA":
+      case "ArrowLeft":
+        setRotating(-1);
+        break;
+      case "KeyD":
+      case "ArrowRight":
+        setRotating(1);
+        break;
     }
   };
 
@@ -90,6 +112,7 @@ export function useCameraControls({ setSettings }: UseCameraControlsProps) {
   document.addEventListener("keydown", handleDocumentKeydown);
 
   onCleanup(() => {
+    mainLoop.pause();
     document.removeEventListener("keyup", handleDocumentKeyup);
     document.removeEventListener("keydown", handleDocumentKeydown);
   });

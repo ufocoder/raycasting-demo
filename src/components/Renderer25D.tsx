@@ -10,7 +10,7 @@ import {
   map,
 } from "../data";
 import { degreeToRadians } from "../lib/math";
-
+import { calculateRays } from "../lib/raycasting";
 
 async function time(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -29,82 +29,45 @@ function drawTexture(
     drawVerticalLine(
       ctx,
       x,
-      y, 
+      y,
       y + (yIncrementer + 0.5),
       texture.colors[texture.bitmap[i][texturePositionX]]
-    )
+    );
     y += yIncrementer;
   }
 }
 
- function drawVerticalLine(
-  ctx: CanvasRenderingContext2D, 
-  x: number, 
-  y1: number, 
-  y2: number, 
+function drawVerticalLine(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y1: number,
+  y2: number,
   cssColor: string
 ) {
   ctx.fillStyle = cssColor;
-  ctx.fillRect(
-    x,
-    y1,
-    1,
-    y2 - y1,
-  );
+  ctx.fillRect(x, y1, 1, y2 - y1);
 }
 
 function clear(canvasRef: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
   ctx.clearRect(0, 0, canvasRef.width, canvasRef.height);
 }
 
-async function rayCasting(
-  ctx: CanvasRenderingContext2D,
-  settings: Settings
-) {
-  const camera = settings.camera;
-
-  const maxDistance = Math.max(SCREEN_WIDTH, SCREEN_HEIGHT);
-  const incrementAngle = camera.fov / Math.min(SCREEN_WIDTH, settings.rays);
+async function draw(ctx: CanvasRenderingContext2D, settings: Settings) {
   const incrementWidth = Math.round(SCREEN_WIDTH / settings.rays);
   const interruptionTimeout = RAYCASTING_REDNERING_TIME / settings.rays;
+  const rays = calculateRays(settings);
 
-  let rayAngle = camera.angle - camera.fov / 2;
-
-  for (let rayCount = 0; rayCount < settings.rays; rayCount++) {
-    const ray = {
-      x: camera.x,
-      y: camera.y,
-    };
-
-    const rayCos = Math.cos(degreeToRadians(rayAngle)) * settings.rayStep;
-    const raySin = Math.sin(degreeToRadians(rayAngle)) * settings.rayStep;
-
-    let wall = 0;
-
-    while (wall === 0 || ray.x > maxDistance || ray.y > maxDistance) {
-      ray.x += rayCos;
-      ray.y += raySin;
-      wall = map[Math.floor(ray.y)][Math.floor(ray.x)];
-    }
-
-    let distance = Math.sqrt(
-      Math.pow(camera.x - ray.x, 2) + Math.pow(camera.y - ray.y, 2)
-    );
-
-    if (settings.withFisheyeFix) {
-      distance = distance * Math.cos(degreeToRadians(rayAngle - camera.angle));
-    }
-
-    const wallHeight = Math.floor(SCREEN_HEIGHT / 2 / distance);
-    const texture = textures[wall - 1];
-    const texturePositionX = Math.floor(
-      (texture.width * (ray.x + ray.y)) % texture.width
-    );
-
+  for (let i = 0; i < settings.rays; i++) {
+    const ray = rays[i];
     for (let j = 0; j < incrementWidth; j++) {
+      const wallHeight = Math.floor(SCREEN_HEIGHT / 2 / ray.distance);
+      const texture = textures[0];
+      const texturePositionX = Math.floor(
+        (texture.width * (ray.x + ray.y)) % texture.width
+      );
       drawVerticalLine(
         ctx,
-        rayCount * incrementWidth + j,
+        i * incrementWidth + j,
         0,
         SCREEN_HEIGHT / 2 - wallHeight,
         COLOR_RAYCASTING_CEILING
@@ -112,7 +75,7 @@ async function rayCasting(
       if (settings.withTexture) {
         drawTexture(
           ctx,
-          rayCount * incrementWidth + j,
+          i * incrementWidth + j,
           wallHeight,
           texturePositionX,
           texture
@@ -120,7 +83,7 @@ async function rayCasting(
       } else {
         drawVerticalLine(
           ctx,
-          rayCount * incrementWidth + j,
+          i * incrementWidth + j,
           SCREEN_HEIGHT / 2 - wallHeight,
           SCREEN_HEIGHT / 2 + wallHeight,
           COLOR_RAYCASTING_WALL
@@ -128,14 +91,12 @@ async function rayCasting(
       }
       drawVerticalLine(
         ctx,
-        rayCount * incrementWidth + j,
+        i * incrementWidth + j,
         SCREEN_HEIGHT / 2 + wallHeight,
         SCREEN_HEIGHT,
         COLOR_RAYCASTING_FLOOR
       );
     }
-
-    rayAngle += incrementAngle;
 
     if (settings.withInterruption) {
       await time(interruptionTimeout);
@@ -161,10 +122,10 @@ const Renderer: Component<RendererProps> = ({ settings }) => {
       return;
     }
 
-    ctx.scale(1,1)
+    ctx.scale(1, 1);
 
     clear(canvasRef, ctx);
-    await rayCasting(ctx, settings());
+    await draw(ctx, settings());
   };
 
   onMount(async () => {

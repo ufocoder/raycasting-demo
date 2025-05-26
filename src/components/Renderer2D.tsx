@@ -1,5 +1,14 @@
 import { type Component, onMount, createEffect, type Accessor } from "solid-js";
-import { COLOR_MAP_PATH, COLOR_MAP_PLAYER, COLOR_MAP_WALL, map, MAP_CELL_SIZE, MAP_PLAYER_SIZE } from "../data";
+import {
+  COLOR_MAP_PATH,
+  COLOR_MAP_PLAYER,
+  COLOR_MAP_VISION,
+  COLOR_MAP_WALL,
+  map,
+  MAP_CELL_SIZE,
+  MAP_PLAYER_SIZE,
+} from "../data";
+import { calculateRays } from "../lib/raycasting";
 
 interface RendererProps {
   settings: Accessor<Settings>;
@@ -9,48 +18,54 @@ function clear(canvasRef: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
   ctx.clearRect(0, 0, canvasRef.width, canvasRef.height);
 }
 
+function drawPolygon(
+  ctx: CanvasRenderingContext2D,
+  points: { x: number; y: number }[]
+) {
+  ctx.beginPath();
+  ctx.moveTo(points[0].x * MAP_CELL_SIZE, points[0].y * MAP_CELL_SIZE);
+  for (let i = 1; i < points.length; i++) {
+    ctx.lineTo(points[i].x * MAP_CELL_SIZE, points[i].y * MAP_CELL_SIZE);
+  }
+  ctx.closePath();
+  ctx.fillStyle = COLOR_MAP_VISION;
+  ctx.fill();
+}
+
 function drawMaze(ctx: CanvasRenderingContext2D) {
   map.forEach((row, y) => {
     row.forEach((cell, x) => {
       ctx.fillStyle = cell === 1 ? COLOR_MAP_WALL : COLOR_MAP_PATH;
-      ctx.fillRect(x * MAP_CELL_SIZE, y * MAP_CELL_SIZE, MAP_CELL_SIZE, MAP_CELL_SIZE);
+      ctx.fillRect(
+        x * MAP_CELL_SIZE,
+        y * MAP_CELL_SIZE,
+        MAP_CELL_SIZE,
+        MAP_CELL_SIZE
+      );
     });
   });
 }
 
+async function drawVision(ctx: CanvasRenderingContext2D, settings: Settings) {
+  const camera = settings.camera;
+  const visionPoints = [
+    { x: camera.x, y: camera.y },
+    ...calculateRays(settings),
+  ];
+
+  drawPolygon(ctx, visionPoints);
+}
+
 function drawCamera(ctx: CanvasRenderingContext2D, camera: Camera) {
-  const fov = camera.fov;
-  const angle = camera.angle;
-  const playerX = camera.x * MAP_CELL_SIZE;
-  const playerY = camera.y * MAP_CELL_SIZE;
-  const sectorRadius = MAP_CELL_SIZE * 2;
-
-  const angleRad = (angle * Math.PI) / 180;
-  const fovRad = (fov * Math.PI) / 180;
-  const startAngle = angleRad - fovRad / 2;
-  const endAngle = angleRad + fovRad / 2;
-
-  ctx.beginPath();
-  ctx.moveTo(playerX, playerY);
-  ctx.strokeStyle = COLOR_MAP_PLAYER;
-  ctx.lineTo(
-    playerX + Math.cos(startAngle) * sectorRadius,
-    playerY + Math.sin(startAngle) * sectorRadius
-  );
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.moveTo(playerX, playerY);
-  ctx.strokeStyle = COLOR_MAP_PLAYER;
-  ctx.lineTo(
-    playerX + Math.cos(endAngle) * sectorRadius,
-    playerY + Math.sin(endAngle) * sectorRadius
-  );
-  ctx.stroke();
-
   ctx.fillStyle = COLOR_MAP_PLAYER;
   ctx.beginPath();
-  ctx.arc(playerX, playerY, MAP_PLAYER_SIZE / 2, 0, Math.PI * 2);
+  ctx.arc(
+    camera.x * MAP_CELL_SIZE,
+    camera.y * MAP_CELL_SIZE,
+    MAP_PLAYER_SIZE / 2,
+    0,
+    Math.PI * 2
+  );
   ctx.fill();
 }
 
@@ -70,6 +85,7 @@ const Renderer: Component<RendererProps> = ({ settings }) => {
 
     clear(canvasRef, ctx);
     drawMaze(ctx);
+    drawVision(ctx, settings());
     drawCamera(ctx, settings().camera);
   };
 

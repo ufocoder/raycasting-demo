@@ -12,7 +12,7 @@ const defaultSettings = {
   withFisheyeFix: true,
   withInterruption: false,
   camera: {
-    angle: 90,
+    angle: 45,
     fov: 45,
     x: 1.5,
     y: 1.5,

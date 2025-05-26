@@ -7,6 +7,7 @@ export const MAP_PLAYER_SIZE = 10;
 export const COLOR_MAP_WALL = "#374151"; 
 export const COLOR_MAP_PATH = "#e0e0e0"; 
 export const COLOR_MAP_PLAYER = "#3b82f6";
+export const COLOR_MAP_VISION = "#fffac6";
 
 export const COLOR_RAYCASTING_CEILING = "#000000";
 export const COLOR_RAYCASTING_WALL = "#24262a";

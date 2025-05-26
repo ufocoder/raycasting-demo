@@ -7,9 +7,7 @@ import {
   SCREEN_HEIGHT,
   SCREEN_WIDTH,
   RAYCASTING_REDNERING_TIME,
-  map,
 } from "../data";
-import { degreeToRadians } from "../lib/math";
 import { calculateRays } from "../lib/raycasting";
 
 async function time(ms: number) {
@@ -61,7 +59,7 @@ async function draw(ctx: CanvasRenderingContext2D, settings: Settings) {
     const ray = rays[i];
     for (let j = 0; j < incrementWidth; j++) {
       const wallHeight = Math.floor(SCREEN_HEIGHT / 2 / ray.distance);
-      const texture = textures[0];
+      const texture = textures[ray.wall - 1];
       const texturePositionX = Math.floor(
         (texture.width * (ray.x + ray.y)) % texture.width
       );

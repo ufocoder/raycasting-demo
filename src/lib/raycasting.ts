@@ -4,6 +4,7 @@ import { degreeToRadians } from "./math";
 interface Ray {
   x: number;
   y: number;
+  wall: number;
   distance: number;
 }
 
@@ -21,6 +22,7 @@ export function calculateRays(settings: Settings): Ray[] {
       x: camera.x,
       y: camera.y,
       distance: 0,
+      wall: -1,
     };
 
     const rayCos = Math.cos(degreeToRadians(rayAngle)) * settings.rayStep;
@@ -44,6 +46,7 @@ export function calculateRays(settings: Settings): Ray[] {
 
     rayAngle += incrementAngle;
     ray.distance = distance;
+    ray.wall = wall;
     rays.push(ray);
   }
 

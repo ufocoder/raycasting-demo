@@ -1,5 +1,5 @@
-export const SCREEN_WIDTH = 640;
-export const SCREEN_HEIGHT = 480;
+export const SCREEN_WIDTH = 800;
+export const SCREEN_HEIGHT = 600;
 
 export const MAP_CELL_SIZE = 20;
 export const MAP_PLAYER_SIZE = 10;

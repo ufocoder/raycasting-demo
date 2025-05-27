@@ -12,6 +12,8 @@ interface Camera {
   fov: number;
   x: number;
   y: number;
+  moveSpeed: number;
+  rotationSpeed: number;
 }
 
 interface Settings {

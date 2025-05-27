@@ -7,17 +7,14 @@ interface UseCameraControlsProps {
   setSettings: Setter<Settings>;
 }
 
-const moveSpeed = 0.1;
-const rotationSpeed = 2;
-
-
 export function useCameraControls({ setSettings }: UseCameraControlsProps) {
   const [isMoving, setMoving] = createSignal(0);
   const [isRotating, setRotating] = createSignal(0);
 
   function moveCamera(camera: Camera, direction: number) {
-    let playerCos = Math.cos(degreeToRadians(camera.angle)) * moveSpeed;
-    let playerSin = Math.sin(degreeToRadians(camera.angle)) * moveSpeed;
+    console.log(camera.moveSpeed)
+    let playerCos = Math.cos(degreeToRadians(camera.angle)) * camera.moveSpeed;
+    let playerSin = Math.sin(degreeToRadians(camera.angle)) * camera.moveSpeed;
     let newX = camera.x + direction * playerCos;
     let newY = camera.y + direction * playerSin;
     let checkX = Math.floor(
@@ -40,7 +37,7 @@ export function useCameraControls({ setSettings }: UseCameraControlsProps) {
   function rotateCamera(camera: Camera, direction: number) {
     return {
       ...camera,
-      angle: (camera.angle + direction * rotationSpeed + 360) % 360,
+      angle: (camera.angle + direction * camera.rotationSpeed + 360) % 360,
     };
   }
 

@@ -1,5 +1,6 @@
 import { type Accessor, type Setter, type Component } from "solid-js";
 import { SCREEN_WIDTH } from "../data";
+import { round } from "../lib/math";
 
 interface SettingsFormProps {
   settings: Accessor<Settings>;
@@ -8,7 +9,7 @@ interface SettingsFormProps {
 
 const rayGroup = new Array(4)
   .fill(0)
-  .map((_, i) => Math.round(SCREEN_WIDTH / (i + 1)));
+  .map((_, i) => Math.round(SCREEN_WIDTH / 2 ** (i + 1)));
 
 const SettingsForm: Component<SettingsFormProps> = ({
   settings,
@@ -77,7 +78,7 @@ const SettingsForm: Component<SettingsFormProps> = ({
             ))}
           </div>
         </div>
-          <div class="flex items-center mb-2">
+          <div class="flex items-center mb-1">
           <div class="w-1/2">
             <label
               class="text-sm font-medium text-gray-900 pr-4"
@@ -96,7 +97,7 @@ const SettingsForm: Component<SettingsFormProps> = ({
               step="0.005"
               value={settings().rayStep}
               onInput={handleInputChange}
-              class="bg-gray-100 border-gray-200 border-1 text-sm appearance-none rounded w-full py-1 px-2 text-gray-700 leading-tight focus:bg-white"
+              class="bg-gray-100 border-gray-200 border-1 text-xs appearance-none rounded w-full py-1 px-2 text-gray-700 leading-tight focus:bg-white"
             />
           </div>
         </div>
@@ -106,7 +107,7 @@ const SettingsForm: Component<SettingsFormProps> = ({
       <fieldset>
         <legend class="mt-1 mb-1 bg-blue-50 w-full p-1">Camera Settings</legend>
 
-        <div class="flex items-center mb-2">
+        <div class="flex items-center mb-1">
           <div class="w-1/2">
             <label
               class="text-sm font-medium text-gray-900 pr-4"
@@ -125,12 +126,12 @@ const SettingsForm: Component<SettingsFormProps> = ({
               step="1"
               value={settings().camera.angle}
               onInput={handleInputChange}
-              class="bg-gray-100 border-gray-200 border-1 text-sm appearance-none rounded w-full py-1 px-2 text-gray-700 leading-tight focus:bg-white"
+              class="bg-gray-100 border-gray-200 border-1 text-xs appearance-none rounded w-full py-1 px-2 text-gray-700 leading-tight focus:bg-white"
             />
           </div>
         </div>
 
-        <div class="flex items-center mb-2">
+        <div class="flex items-center mb-1">
           <div class="w-1/2">
             <label
               class="text-sm font-medium text-gray-900 pr-4"
@@ -148,12 +149,12 @@ const SettingsForm: Component<SettingsFormProps> = ({
               max="120"
               value={settings().camera.fov}
               onInput={handleInputChange}
-              class="bg-gray-100 border-gray-200 border-1 text-sm appearance-none rounded w-full py-1 px-2 text-gray-700 leading-tight focus:bg-white"
+              class="bg-gray-100 border-gray-200 border-1 text-xs appearance-none rounded w-full py-1 px-2 text-gray-700 leading-tight focus:bg-white"
             />
           </div>
         </div>
 
-        <div class="flex items-center mb-2">
+        <div class="flex items-center mb-1">
           <div class="w-1/2">
             <label
               class="text-sm font-medium text-gray-900 pr-4"
@@ -167,15 +168,15 @@ const SettingsForm: Component<SettingsFormProps> = ({
               type="number"
               id="camera.x"
               name="camera.x"
-              step="0.1"
-              value={settings().camera.x}
+              step="0.01"
+              value={round(settings().camera.x)}
               onInput={handleInputChange}
-              class="bg-gray-100 border-gray-200 border-1 text-sm appearance-none rounded w-full py-1 px-2 text-gray-700 leading-tight focus:bg-white"
+              class="bg-gray-100 border-gray-200 border-1 text-xs appearance-none rounded w-full py-1 px-2 text-gray-700 leading-tight focus:bg-white"
             />
           </div>
         </div>
 
-        <div class="flex items-center mb-2">
+        <div class="flex items-center mb-1">
           <div class="w-1/2">
             <label
               class="text-sm font-medium text-gray-900 pr-4"
@@ -189,10 +190,58 @@ const SettingsForm: Component<SettingsFormProps> = ({
               type="number"
               id="camera.y"
               name="camera.y"
-              step="0.1"
-              value={settings().camera.y}
+              step="0.01"
+              value={round(settings().camera.y)}
               onInput={handleInputChange}
-              class="bg-gray-100 border-gray-200 border-1 text-sm appearance-none rounded w-full py-1 px-2 text-gray-700 leading-tight focus:bg-white"
+              class="bg-gray-100 border-gray-200 border-1 text-xs appearance-none rounded w-full py-1 px-2 text-gray-700 leading-tight focus:bg-white"
+            />
+          </div>
+        </div>
+
+        <div class="flex items-center mb-1">
+          <div class="w-1/2">
+            <label
+              class="text-sm font-medium text-gray-900 pr-4"
+              for="camera.moveSpeed"
+            >
+              Move speed:
+            </label>
+          </div>
+          <div class="w-1/2">
+            <input
+              type="number"
+              id="camera.moveSpeed"
+              name="camera.moveSpeed"
+              min="0"
+              step="0.025"
+              max="0.5"
+              value={settings().camera.moveSpeed}
+              onInput={handleInputChange}
+              class="bg-gray-100 border-gray-200 border-1 text-xs appearance-none rounded w-full py-1 px-2 text-gray-700 leading-tight focus:bg-white"
+            />
+          </div>
+        </div>
+
+        <div class="flex items-center mb-1">
+          <div class="w-1/2">
+            <label
+              class="text-sm font-medium text-gray-900 pr-4"
+              for="camera.rotationSpeed"
+            >
+              Rotation speed:
+            </label>
+          </div>
+          <div class="w-1/2">
+            <input
+              type="number"
+              id="camera.rotationSpeed"
+              name="camera.rotationSpeed"
+              min="0"
+              step="0.025"
+              max="5"
+              value={settings().camera.rotationSpeed}
+              onInput={handleInputChange}
+              class="bg-gray-100 border-gray-200 border-1 text-xs appearance-none rounded w-full py-1 px-2 text-gray-700 leading-tight focus:bg-white"
             />
           </div>
         </div>
@@ -200,7 +249,7 @@ const SettingsForm: Component<SettingsFormProps> = ({
 
       <fieldset>
         <legend class="mt-1 mb-1 bg-blue-50 w-full p-1">Features</legend>
-        <div class="flex items-center mb-2">
+        <div class="flex items-center mb-1">
           <input
             type="checkbox"
             id="withTexture"
@@ -217,7 +266,7 @@ const SettingsForm: Component<SettingsFormProps> = ({
           </label>
         </div>
 
-        <div class="flex items-center mb-2">
+        <div class="flex items-center mb-1">
           <input
             type="checkbox"
             id="withInterruption"
@@ -234,7 +283,7 @@ const SettingsForm: Component<SettingsFormProps> = ({
           </label>
         </div>
 
-        <div class="flex items-center mb-2">
+        <div class="flex items-center mb-1">
           <input
             type="checkbox"
             id="withFisheyeFix"

@@ -7,9 +7,14 @@ interface SettingsFormProps {
   setSettings: Setter<Settings>;
 }
 
-const rayGroup = new Array(4)
-  .fill(0)
-  .map((_, i) => Math.round(SCREEN_WIDTH / 2 ** (i + 1)));
+const uniq = (numbers: number[]) => Array.from(new Set(numbers));
+const devideBy2 = (initialNumber: number, times: number) =>
+  new Array(times).fill(0).map((_, i) => Math.round(initialNumber / 2 ** i));
+
+const normalize = (value: string | boolean) =>
+  typeof value === "string" && !isNaN(Number(value)) ? Number(value) : value;
+
+const rayGroups = uniq(devideBy2(SCREEN_WIDTH, 7));
 
 const SettingsForm: Component<SettingsFormProps> = ({
   settings,
@@ -20,35 +25,31 @@ const SettingsForm: Component<SettingsFormProps> = ({
     const name = target.name;
     const value = target.type === "checkbox" ? target.checked : target.value;
 
-    if (name.startsWith("camera.")) {
-      const cameraField = name.split(".")[1] as keyof Settings["camera"];
+    
+    if (name.includes(".")) {
+      const names = name.split(".");
+
+      const groupProperty = names[0] as "camera" | "mode7" | "raycasting";
+      const propertyName = names[1] as
+        | keyof Settings["camera"]
+        | keyof Settings["mode7"]
+        | keyof Settings["raycasting"];
+
+      console.log(groupProperty, propertyName,  normalize(value));
       setSettings((prev) => ({
         ...prev,
-        camera: {
-          ...prev.camera,
-          [cameraField]:
-            typeof value === "string" && !isNaN(Number(value))
-              ? Number(value)
-              : value,
+        [groupProperty]: {
+          ...prev[groupProperty],
+          [propertyName]: normalize(value),
         },
       }));
     } else {
       setSettings((prev) => ({
         ...prev,
-        [name]:
-          typeof value === "string" && !isNaN(Number(value))
-            ? Number(value)
-            : value,
+        [name]: normalize(value),
       }));
     }
     e.preventDefault();
-  };
-
-  const setRays = (rays: number) => {
-    setSettings((prev) => ({
-      ...prev,
-      rays,
-    }));
   };
 
   const handleSubmit = (e: Event) => {
@@ -58,54 +59,142 @@ const SettingsForm: Component<SettingsFormProps> = ({
   return (
     <form onSubmit={handleSubmit} class="p-4">
       <fieldset>
-        <legend class="mt-1 mb-1 bg-blue-50 w-full p-1">Rays</legend>
+        <legend class="mt-1 mb-1 bg-blue-50 w-full p-1">Raycasting</legend>
 
-        <div class="flex items-center mb-3">
+        <div class="flex items-center mb-1">
           {" "}
-          <div class="w-1/3">
+          <div class="w-1/2">
             <label class="text-sm font-medium text-gray-900 pr-4">
-              Numbers:
+              Rays amount:
             </label>
           </div>
-          <div class="flex w-2/3">
-            {rayGroup.map((rays) => (
-              <button
-                onClick={() => setRays(rays)}
-                class={`cursor-pointer ${rays === settings().rays ? `bg-blue-100` : `bg-grey-100`} text-blue-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm`}
-              >
-                {rays}
-              </button>
-            ))}
+          <div class="w-1/2">
+            <select
+              id="raycasting.amount"
+              name="raycasting.amount"
+              value={settings().raycasting.amount}
+              class="bg-gray-100 border-gray-200 border-1 text-sm rounded w-full py-1 px-1 text-gray-700 leading-tight focus:bg-white"
+              onInput={handleInputChange}
+            >
+              {rayGroups.map((rays) => (
+                <option value={rays}>{rays}</option>
+              ))}
+            </select>
           </div>
         </div>
-          <div class="flex items-center mb-1">
+        <div class="flex items-center mb-1">
           <div class="w-1/2">
             <label
               class="text-sm font-medium text-gray-900 pr-4"
-              for="rayStep"
+              for="raycasting.step"
             >
-              Step:
+              Ray step
             </label>
           </div>
           <div class="w-1/2">
             <input
               type="number"
-              id="rayStep"
-              name="rayStep"
+              id="raycasting.step"
+              name="raycasting.step"
               min="0.005"
               max="1"
               step="0.005"
-              value={settings().rayStep}
+              value={settings().raycasting.step}
               onInput={handleInputChange}
-              class="bg-gray-100 border-gray-200 border-1 text-xs appearance-none rounded w-full py-1 px-2 text-gray-700 leading-tight focus:bg-white"
+              class="bg-gray-100 border-gray-200 border-1 text-sm appearance-none rounded w-full py-1 px-2 text-gray-700 leading-tight focus:bg-white"
+            />
+          </div>
+        </div>
+        <div class="flex items-center mb-1">
+          <div class="w-1/2">
+            <label
+              for="raycasting.texture"
+              class="text-sm font-medium text-gray-900 pr-4 cursor-pointer "
+            >
+              Texture
+            </label>
+          </div>
+          <div class="w-1/2">
+            <input
+              type="checkbox"
+              id="raycasting.texture"
+              name="raycasting.texture"
+              checked={settings().raycasting.texture}
+              onChange={handleInputChange}
+              class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded-sm "
+            />
+          </div>
+        </div>
+        <div class="flex items-center mb-1">
+          <div class="w-1/2">
+            <label
+              for="raycasting.fisheyeFix"
+              class="text-sm font-medium text-gray-900 pr-4 cursor-pointer "
+            >
+              Fix fisheye
+            </label>
+          </div>
+          <div class="w-1/2">
+            <input
+              type="checkbox"
+              id="raycasting.fisheyeFix"
+              name="raycasting.fisheyeFix"
+              checked={settings().raycasting.fisheyeFix}
+              onChange={handleInputChange}
+              class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded-sm "
+            />
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend class="mt-1 mb-1 bg-blue-50 w-full p-1">Mode 7</legend>
+
+        <div class="flex items-center mb-1">
+          <div class="w-1/2">
+            <label
+              class="text-sm font-medium text-gray-900 pr-4"
+              for="mode7.texture"
+            >
+              Texture
+            </label>
+          </div>
+          <div class="w-1/2">
+            <input
+              type="checkbox"
+              id="mode7.texture"
+              name="mode7.texture"
+              checked={settings().mode7.texture}
+              onChange={handleInputChange}
+              class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded-sm"
             />
           </div>
         </div>
 
+        <div class="flex items-center mb-1">
+          <div class="w-1/2">
+            <label
+              for="mode7.useBuffer"
+              class="text-sm font-medium text-gray-900 pr-4 cursor-pointer "
+            >
+              Use buffer
+            </label>
+          </div>
+          <div class="w-1/2">
+            <input
+              type="checkbox"
+              id="mode7.useBuffer"
+              name="mode7.useBuffer"
+              checked={settings().mode7.useBuffer}
+              onChange={handleInputChange}
+              class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded-sm "
+            />
+          </div>
+        </div>
       </fieldset>
 
       <fieldset>
-        <legend class="mt-1 mb-1 bg-blue-50 w-full p-1">Camera Settings</legend>
+        <legend class="mt-1 mb-1 bg-blue-50 w-full p-1">Camera</legend>
 
         <div class="flex items-center mb-1">
           <div class="w-1/2">
@@ -113,7 +202,7 @@ const SettingsForm: Component<SettingsFormProps> = ({
               class="text-sm font-medium text-gray-900 pr-4"
               for="camera.angle"
             >
-              Angle:
+              Angle
             </label>
           </div>
           <div class="w-1/2">
@@ -124,9 +213,9 @@ const SettingsForm: Component<SettingsFormProps> = ({
               min="0"
               max="360"
               step="1"
-              value={settings().camera.angle}
+              value={round(settings().camera.angle)}
               onInput={handleInputChange}
-              class="bg-gray-100 border-gray-200 border-1 text-xs appearance-none rounded w-full py-1 px-2 text-gray-700 leading-tight focus:bg-white"
+              class="bg-gray-100 border-gray-200 border-1 text-sm appearance-none rounded w-full py-1 px-2 text-gray-700 leading-tight"
             />
           </div>
         </div>
@@ -137,7 +226,7 @@ const SettingsForm: Component<SettingsFormProps> = ({
               class="text-sm font-medium text-gray-900 pr-4"
               for="camera.fov"
             >
-              Field of View:
+              Field of View
             </label>
           </div>
           <div class="w-1/2">
@@ -149,7 +238,7 @@ const SettingsForm: Component<SettingsFormProps> = ({
               max="120"
               value={settings().camera.fov}
               onInput={handleInputChange}
-              class="bg-gray-100 border-gray-200 border-1 text-xs appearance-none rounded w-full py-1 px-2 text-gray-700 leading-tight focus:bg-white"
+              class="bg-gray-100 border-gray-200 border-1 text-sm appearance-none rounded w-full py-1 px-2 text-gray-700 leading-tight focus:bg-white"
             />
           </div>
         </div>
@@ -160,7 +249,7 @@ const SettingsForm: Component<SettingsFormProps> = ({
               class="text-sm font-medium text-gray-900 pr-4"
               for="camera.x"
             >
-              Position X:
+              Position X
             </label>
           </div>
           <div class="w-1/2">
@@ -171,7 +260,7 @@ const SettingsForm: Component<SettingsFormProps> = ({
               step="0.01"
               value={round(settings().camera.x)}
               onInput={handleInputChange}
-              class="bg-gray-100 border-gray-200 border-1 text-xs appearance-none rounded w-full py-1 px-2 text-gray-700 leading-tight focus:bg-white"
+              class="bg-gray-100 border-gray-200 border-1 text-sm appearance-none rounded w-full py-1 px-2 text-gray-700 leading-tight focus:bg-white"
             />
           </div>
         </div>
@@ -182,7 +271,7 @@ const SettingsForm: Component<SettingsFormProps> = ({
               class="text-sm font-medium text-gray-900 pr-4"
               for="camera.y"
             >
-              Position Y:
+              Position Y
             </label>
           </div>
           <div class="w-1/2">
@@ -193,7 +282,7 @@ const SettingsForm: Component<SettingsFormProps> = ({
               step="0.01"
               value={round(settings().camera.y)}
               onInput={handleInputChange}
-              class="bg-gray-100 border-gray-200 border-1 text-xs appearance-none rounded w-full py-1 px-2 text-gray-700 leading-tight focus:bg-white"
+              class="bg-gray-100 border-gray-200 border-1 text-sm appearance-none rounded w-full py-1 px-2 text-gray-700 leading-tight focus:bg-white"
             />
           </div>
         </div>
@@ -204,7 +293,7 @@ const SettingsForm: Component<SettingsFormProps> = ({
               class="text-sm font-medium text-gray-900 pr-4"
               for="camera.moveSpeed"
             >
-              Move speed:
+              Move speed
             </label>
           </div>
           <div class="w-1/2">
@@ -217,7 +306,7 @@ const SettingsForm: Component<SettingsFormProps> = ({
               max="0.5"
               value={settings().camera.moveSpeed}
               onInput={handleInputChange}
-              class="bg-gray-100 border-gray-200 border-1 text-xs appearance-none rounded w-full py-1 px-2 text-gray-700 leading-tight focus:bg-white"
+              class="bg-gray-100 border-gray-200 border-1 text-sm appearance-none rounded w-full py-1 px-2 text-gray-700 leading-tight focus:bg-white"
             />
           </div>
         </div>
@@ -228,7 +317,7 @@ const SettingsForm: Component<SettingsFormProps> = ({
               class="text-sm font-medium text-gray-900 pr-4"
               for="camera.rotationSpeed"
             >
-              Rotation speed:
+              Rotation speed
             </label>
           </div>
           <div class="w-1/2">
@@ -241,64 +330,9 @@ const SettingsForm: Component<SettingsFormProps> = ({
               max="5"
               value={settings().camera.rotationSpeed}
               onInput={handleInputChange}
-              class="bg-gray-100 border-gray-200 border-1 text-xs appearance-none rounded w-full py-1 px-2 text-gray-700 leading-tight focus:bg-white"
+              class="bg-gray-100 border-gray-200 border-1 text-sm appearance-none rounded w-full py-1 px-2 text-gray-700 leading-tight focus:bg-white"
             />
           </div>
-        </div>
-      </fieldset>
-
-      <fieldset>
-        <legend class="mt-1 mb-1 bg-blue-50 w-full p-1">Features</legend>
-        <div class="flex items-center mb-1">
-          <input
-            type="checkbox"
-            id="withTexture"
-            name="withTexture"
-            checked={settings().withTexture}
-            onChange={handleInputChange}
-            class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-blue-500 focus:ring-2"
-          />
-          <label
-            for="withTexture"
-            class="cursor-pointer ms-2 text-sm font-medium text-gray-90"
-          >
-            With texture
-          </label>
-        </div>
-
-        <div class="flex items-center mb-1">
-          <input
-            type="checkbox"
-            id="withInterruption"
-            name="withInterruption"
-            checked={settings().withInterruption}
-            onChange={handleInputChange}
-            class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-blue-500  focus:ring-2"
-          />
-          <label
-            for="withInterruption"
-            class="cursor-pointer ms-2 text-sm font-medium text-gray-900"
-          >
-            With interruption
-          </label>
-        </div>
-
-        <div class="flex items-center mb-1">
-          <input
-            type="checkbox"
-            id="withFisheyeFix"
-            name="withFisheyeFix"
-            checked={settings().withFisheyeFix}
-            onChange={handleInputChange}
-            class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-blue-500  focus:ring-2"
-          />
-
-          <label
-            for="withFisheyeFix"
-            class="cursor-pointer ms-2 text-sm font-medium text-gray-900"
-          >
-            With fisheye fix
-          </label>
         </div>
       </fieldset>
     </form>

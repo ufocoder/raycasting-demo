@@ -16,20 +16,23 @@ async function time(ms: number) {
 
 function drawTexture(
   ctx: CanvasRenderingContext2D,
-  x: number,
-  wallHeight: number,
-  texturePositionX: number,
-  texture: Texture
+  ray: Ray,
+  screenX: number,
 ) {
-  let yIncrementer = (wallHeight * 2) / texture.height;
+  const wallHeight = Math.floor(SCREEN_HEIGHT / 2 / ray.distance);
+  const texturePositionX = Math.floor(
+    (textures.wall.width * (ray.x + ray.y)) % textures.wall.width
+  );
+  
+  let yIncrementer = (wallHeight * 2) / textures.wall.height;
   let y = SCREEN_HEIGHT / 2 - wallHeight;
-  for (let i = 0; i < texture.height; i++) {
+  for (let i = 0; i < textures.wall.height; i++) {
     drawVerticalLine(
       ctx,
-      x,
+      screenX,
       y,
       y + (yIncrementer + 0.5),
-      texture.colors[texture.bitmap[i][texturePositionX]]
+      textures.wall.colors.hex[textures.wall.bitmap[i][texturePositionX]]
     );
     y += yIncrementer;
   }
@@ -51,32 +54,74 @@ function clear(canvasRef: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
 }
 
 async function draw(ctx: CanvasRenderingContext2D, settings: Settings) {
-  const incrementWidth = Math.round(SCREEN_WIDTH / settings.rays);
-  const interruptionTimeout = RAYCASTING_REDNERING_TIME / settings.rays;
+  if (settings.mode7.texture) {
+    drawMode7(ctx, settings);
+  } else { 
+    ctx.fillStyle = COLOR_RAYCASTING_FLOOR;
+    ctx.fillRect(0, SCREEN_HEIGHT / 2, SCREEN_WIDTH, SCREEN_HEIGHT / 2);
+    ctx.fillStyle = COLOR_RAYCASTING_CEILING;
+    ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT / 2);
+  }
+  await drawWalls(ctx, settings);
+}
+
+const getTexturePosition = (pos: number, size: number) => 
+  (Math.floor(pos) % size + size) % size;
+
+const bufferCanvas = document.createElement("canvas");
+const bufferCtx = bufferCanvas.getContext("2d")!;
+const bufferImage = bufferCtx.getImageData(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT / 2);
+
+function drawMode7(ctx: CanvasRenderingContext2D, settings: Settings) {
+  const texture = textures.floor;
+  const scale = texture.scale;
+  const focalLength = 1.0;
+
+  for (let i = 0; i < SCREEN_WIDTH; i++) {
+    for (let j = SCREEN_HEIGHT / 2; j < SCREEN_HEIGHT; j++) {
+      let x = SCREEN_WIDTH / 2 - i;
+      let y = j + focalLength;
+      let z = j - SCREEN_HEIGHT / 2 + 0.001;
+
+      let projectionX = (x / z + settings.camera.x) * scale;
+      let projectionY = (y / z + settings.camera.y) * scale;
+
+      const textureX = getTexturePosition(projectionX, texture.width);
+      const textureY = getTexturePosition(projectionY, texture.height);
+      const colorIndex = texture.bitmap[textureY][textureX];
+
+      if (settings.mode7.useBuffer) {
+        const pixelIndex = ((j - SCREEN_HEIGHT / 2)* SCREEN_WIDTH + i) * 4;
+        const [r,g,b] = texture.colors.rgb[colorIndex];
+        bufferImage.data[pixelIndex] = r;
+        bufferImage.data[pixelIndex + 1] = g;
+        bufferImage.data[pixelIndex + 2] = b;
+        bufferImage.data[pixelIndex + 3] = 255;
+      } else {
+        ctx.fillStyle = texture.colors.hex[colorIndex];
+        ctx.fillRect(i, j, 1, 1);
+      }
+    }
+  }
+  if (settings.mode7.useBuffer) {
+    ctx.putImageData(bufferImage, 0, SCREEN_HEIGHT / 2);
+  }
+}
+
+async function drawWalls(ctx: CanvasRenderingContext2D, settings: Settings) {
+  const incrementWidth = Math.round(SCREEN_WIDTH / settings.raycasting.amount);
+  const interruptionTimeout = RAYCASTING_REDNERING_TIME / settings.raycasting.amount;
   const rays = calculateRays(settings);
 
-  for (let i = 0; i < settings.rays; i++) {
+  for (let i = 0; i < settings.raycasting.amount; i++) {
     const ray = rays[i];
     for (let j = 0; j < incrementWidth; j++) {
       const wallHeight = Math.floor(SCREEN_HEIGHT / 2 / ray.distance);
-      const texture = textures[ray.wall - 1];
-      const texturePositionX = Math.floor(
-        (texture.width * (ray.x + ray.y)) % texture.width
-      );
-      drawVerticalLine(
-        ctx,
-        i * incrementWidth + j,
-        0,
-        SCREEN_HEIGHT / 2 - wallHeight,
-        COLOR_RAYCASTING_CEILING
-      );
-      if (settings.withTexture) {
+      if (settings.raycasting.texture) {
         drawTexture(
           ctx,
-          i * incrementWidth + j,
-          wallHeight,
-          texturePositionX,
-          texture
+          ray,
+          i * incrementWidth + j
         );
       } else {
         drawVerticalLine(
@@ -87,16 +132,9 @@ async function draw(ctx: CanvasRenderingContext2D, settings: Settings) {
           COLOR_RAYCASTING_WALL
         );
       }
-      drawVerticalLine(
-        ctx,
-        i * incrementWidth + j,
-        SCREEN_HEIGHT / 2 + wallHeight,
-        SCREEN_HEIGHT,
-        COLOR_RAYCASTING_FLOOR
-      );
     }
 
-    if (settings.withInterruption) {
+    if (settings.raycasting.interruption) {
       await time(interruptionTimeout);
     }
   }

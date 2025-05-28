@@ -4,7 +4,11 @@ type Texture = {
   width: number;
   height: number;
   bitmap: number[][];
-  colors: string[];
+  colors: {
+    rgb: [number, number, number][];
+    hex: string[];
+  }
+  scale: number;
 }
 
 interface Camera {
@@ -16,11 +20,24 @@ interface Camera {
   rotationSpeed: number;
 }
 
+interface Ray {
+  x: number;
+  y: number;
+  wall: number;
+  distance: number;
+}
+
 interface Settings {
-  rays: number;
-  rayStep: number;
-  withTexture: boolean;
-  withFisheyeFix: boolean;
-  withInterruption: boolean;
+  raycasting: {
+    amount: number;
+    step: number;
+    texture: boolean;
+    fisheyeFix: boolean;
+    interruption: boolean;
+  };
+  mode7: {
+    texture: boolean;
+    useBuffer: boolean;
+  };
   camera: Camera;
 }

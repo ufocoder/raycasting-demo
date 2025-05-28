@@ -28,13 +28,23 @@ export function useFadeOutLayout({ refOverlay }: UseFadeOutLayoutProps) {
     }, duration);
 
     const handleDocumentClick = () => {
-      element.remove();
+      if (element.isConnected) {
+        element.remove();
+      }
     };
 
-    document.addEventListener("click", handleDocumentClick, true);
+    const handleDocumentKeydown = () => {
+      if (element.isConnected) {
+        element.remove();
+      }
+    }
+
+    document.addEventListener("keydown", handleDocumentKeydown);
+    document.addEventListener("click", handleDocumentClick);
 
     onCleanup(() => {
-      document.removeEventListener("click", handleDocumentClick, true);
+      document.addEventListener("keydown", handleDocumentKeydown);
+      document.removeEventListener("click", handleDocumentClick);
       clearTimeout(timeoutId);
     });
   });

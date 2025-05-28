@@ -3,24 +3,9 @@ import Renderer2D from "./components/Renderer2D";
 import Renderer25D from "./components/Renderer25D";
 import FormSettings from "./components/FormSettings";
 import { useCameraControls } from "./hooks/useCameraControls";
-import { SCREEN_WIDTH } from "./data";
 import { useFadeOutLayout } from "./hooks/useOverlayTimeout";
-
-const defaultSettings = {
-  rays: SCREEN_WIDTH,
-  rayStep: 0.005,
-  withTexture: true,
-  withFisheyeFix: true,
-  withInterruption: false,
-  camera: {
-    angle: 45,
-    fov: 45,
-    x: 1.5,
-    y: 1.5,
-    moveSpeed: 0.1,
-    rotationSpeed: 2,
-  },
-};
+import { FramesMetric } from "./components/FramesMetric";
+import { defaultSettings } from "./data";
 
 function App() {
   const [settings, setSettings] = createSignal<Settings>(defaultSettings);
@@ -46,8 +31,10 @@ function App() {
             <div class="bg-white rounded mt-4 shadow-lg mb-4">
               <Renderer25D settings={settings} />
             </div>
-
-            <p class="text-base text-center font-normal text-gray-500">
+            <div class="mb-2">
+              <FramesMetric />
+            </div>
+            <p class="text-center text-xl font-normal text-gray-500">
               Camera control via {" "}
               <kbd class="p-1.5 py-1 text-xs font-semibold text-gray-800 bg-gray-100 border border-gray-400 rounded">
                 W

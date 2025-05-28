@@ -12,7 +12,6 @@ export function useCameraControls({ setSettings }: UseCameraControlsProps) {
   const [isRotating, setRotating] = createSignal(0);
 
   function moveCamera(camera: Camera, direction: number) {
-    console.log(camera.moveSpeed)
     let playerCos = Math.cos(degreeToRadians(camera.angle)) * camera.moveSpeed;
     let playerSin = Math.sin(degreeToRadians(camera.angle)) * camera.moveSpeed;
     let newX = camera.x + direction * playerCos;

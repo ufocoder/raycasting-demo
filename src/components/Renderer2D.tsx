@@ -1,10 +1,10 @@
 import { type Component, onMount, createEffect, type Accessor } from "solid-js";
 import {
+  map,
   COLOR_MAP_PATH,
   COLOR_MAP_PLAYER,
   COLOR_MAP_VISION,
   COLOR_MAP_WALL,
-  map,
   MAP_CELL_SIZE,
   MAP_PLAYER_SIZE,
 } from "../data";

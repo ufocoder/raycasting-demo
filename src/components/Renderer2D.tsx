@@ -9,89 +9,69 @@ import {
   MAP_PLAYER_SIZE,
 } from "../data";
 import { calculateRays } from "../lib/raycasting";
+import CanvasDefault from "../lib/canvas/CanvasDefault";
 
 interface RendererProps {
   settings: Accessor<Settings>;
 }
 
-function clear(canvasRef: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
-  ctx.clearRect(0, 0, canvasRef.width, canvasRef.height);
-}
-
-function drawPolygon(
-  ctx: CanvasRenderingContext2D,
-  points: { x: number; y: number }[]
-) {
-  ctx.beginPath();
-  ctx.moveTo(points[0].x * MAP_CELL_SIZE, points[0].y * MAP_CELL_SIZE);
-  for (let i = 1; i < points.length; i++) {
-    ctx.lineTo(points[i].x * MAP_CELL_SIZE, points[i].y * MAP_CELL_SIZE);
-  }
-  ctx.closePath();
-  ctx.fillStyle = COLOR_MAP_VISION;
-  ctx.fill();
-}
-
-function drawMaze(ctx: CanvasRenderingContext2D) {
+function drawMaze(canvas: CanvasDefault) {
   map.forEach((row, y) => {
     row.forEach((cell, x) => {
-      ctx.fillStyle = cell === 1 ? COLOR_MAP_WALL : COLOR_MAP_PATH;
-      ctx.fillRect(
-        x * MAP_CELL_SIZE,
-        y * MAP_CELL_SIZE,
-        MAP_CELL_SIZE,
-        MAP_CELL_SIZE
-      );
+      canvas.drawRect({
+        x: x * MAP_CELL_SIZE,
+        y: y * MAP_CELL_SIZE,
+        width: MAP_CELL_SIZE,
+        height: MAP_CELL_SIZE,
+        color: cell === 1 ? COLOR_MAP_WALL : COLOR_MAP_PATH,
+      });
     });
   });
 }
 
-async function drawVision(ctx: CanvasRenderingContext2D, settings: Settings) {
-  const camera = settings.camera;
-  const visionPoints = [
-    { x: camera.x, y: camera.y },
-    ...calculateRays(settings),
-  ];
+const resizeCoords = ({ x, y }: { x: number; y: number }) => ({
+  x: x * MAP_CELL_SIZE,
+  y: y * MAP_CELL_SIZE,
+});
 
-  drawPolygon(ctx, visionPoints);
+async function drawVision(canvas: CanvasDefault, settings: Settings) {
+  const points = calculateRays(settings).map(resizeCoords);
+  
+  canvas.drawPolygon({
+    points: [resizeCoords(settings.camera), ...points],
+    color: COLOR_MAP_VISION
+  });
 }
 
-function drawCamera(ctx: CanvasRenderingContext2D, camera: Camera) {
-  ctx.fillStyle = COLOR_MAP_PLAYER;
-  ctx.beginPath();
-  ctx.arc(
-    camera.x * MAP_CELL_SIZE,
-    camera.y * MAP_CELL_SIZE,
-    MAP_PLAYER_SIZE / 2,
-    0,
-    Math.PI * 2
-  );
-  ctx.fill();
+function drawCamera(canvas: CanvasDefault, camera: Camera) {
+  canvas.drawCircle({
+    x: camera.x * MAP_CELL_SIZE,
+    y: camera.y * MAP_CELL_SIZE,
+    radius: MAP_PLAYER_SIZE,
+    color: COLOR_MAP_PLAYER,
+  });
 }
 
 const Renderer: Component<RendererProps> = ({ settings }) => {
-  let canvasRef: HTMLCanvasElement;
+  let ref: HTMLCanvasElement;
+  let canvas: CanvasDefault;
 
   const render = () => {
-    if (!canvasRef!) {
+    if (!ref!) {
       return;
     }
 
-    const ctx = canvasRef!.getContext("2d");
-
-    if (!ctx) {
-      return;
-    }
-
-    clear(canvasRef, ctx);
-    drawMaze(ctx);
-    drawVision(ctx, settings());
-    drawCamera(ctx, settings().camera);
+    drawMaze(canvas);
+    drawVision(canvas, settings());
+    drawCamera(canvas, settings().camera);
   };
 
   onMount(() => {
-    canvasRef!.width = map[0].length * MAP_CELL_SIZE;
-    canvasRef!.height = map.length * MAP_CELL_SIZE;
+    ref!.width = map[0].length * MAP_CELL_SIZE;
+    ref!.height = map.length * MAP_CELL_SIZE;
+
+    canvas = new CanvasDefault(ref!);
+
     render();
   });
 
@@ -99,7 +79,7 @@ const Renderer: Component<RendererProps> = ({ settings }) => {
     render();
   });
 
-  return <canvas ref={canvasRef!} class="border border-gray-300" />;
+  return <canvas ref={ref!} class="border border-gray-300" />;
 };
 
 export default Renderer;

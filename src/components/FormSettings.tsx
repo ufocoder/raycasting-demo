@@ -25,17 +25,14 @@ const SettingsForm: Component<SettingsFormProps> = ({
     const name = target.name;
     const value = target.type === "checkbox" ? target.checked : target.value;
 
-    
     if (name.includes(".")) {
       const names = name.split(".");
 
-      const groupProperty = names[0] as "camera" | "mode7" | "raycasting";
+      const groupProperty = names[0] as "camera" | "raycasting";
       const propertyName = names[1] as
         | keyof Settings["camera"]
-        | keyof Settings["mode7"]
         | keyof Settings["raycasting"];
 
-      console.log(groupProperty, propertyName,  normalize(value));
       setSettings((prev) => ({
         ...prev,
         [groupProperty]: {
@@ -108,26 +105,6 @@ const SettingsForm: Component<SettingsFormProps> = ({
         <div class="flex items-center mb-1">
           <div class="w-1/2">
             <label
-              for="raycasting.texture"
-              class="text-sm font-medium text-gray-900 pr-4 cursor-pointer "
-            >
-              Texture
-            </label>
-          </div>
-          <div class="w-1/2">
-            <input
-              type="checkbox"
-              id="raycasting.texture"
-              name="raycasting.texture"
-              checked={settings().raycasting.texture}
-              onChange={handleInputChange}
-              class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded-sm "
-            />
-          </div>
-        </div>
-        <div class="flex items-center mb-1">
-          <div class="w-1/2">
-            <label
               for="raycasting.fisheyeFix"
               class="text-sm font-medium text-gray-900 pr-4 cursor-pointer "
             >
@@ -145,26 +122,42 @@ const SettingsForm: Component<SettingsFormProps> = ({
             />
           </div>
         </div>
-      </fieldset>
-
-      <fieldset>
-        <legend class="mt-1 mb-1 bg-blue-50 w-full p-1">Mode 7</legend>
-
         <div class="flex items-center mb-1">
           <div class="w-1/2">
             <label
-              class="text-sm font-medium text-gray-900 pr-4"
-              for="mode7.texture"
+              for="raycasting.textureWalls"
+              class="text-sm font-medium text-gray-900 pr-4 cursor-pointer "
             >
-              Texture
+              Texture walls
             </label>
           </div>
           <div class="w-1/2">
             <input
               type="checkbox"
-              id="mode7.texture"
-              name="mode7.texture"
-              checked={settings().mode7.texture}
+              id="raycasting.textureWalls"
+              name="raycasting.textureWalls"
+              checked={settings().raycasting.textureWalls}
+              onChange={handleInputChange}
+              class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded-sm "
+            />
+          </div>
+        </div>
+
+        <div class="flex items-center mb-1">
+          <div class="w-1/2">
+            <label
+              class="text-sm font-medium text-gray-900 pr-4"
+              for="raycasting.textureFloor"
+            >
+              Texture floor
+            </label>
+          </div>
+          <div class="w-1/2">
+            <input
+              type="checkbox"
+              id="raycasting.textureFloor"
+              name="raycasting.textureFloor"
+              checked={settings().raycasting.textureFloor}
               onChange={handleInputChange}
               class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded-sm"
             />
@@ -174,7 +167,7 @@ const SettingsForm: Component<SettingsFormProps> = ({
         <div class="flex items-center mb-1">
           <div class="w-1/2">
             <label
-              for="mode7.useBuffer"
+              for="raycasting.useBuffer"
               class="text-sm font-medium text-gray-900 pr-4 cursor-pointer "
             >
               Use buffer
@@ -183,9 +176,9 @@ const SettingsForm: Component<SettingsFormProps> = ({
           <div class="w-1/2">
             <input
               type="checkbox"
-              id="mode7.useBuffer"
-              name="mode7.useBuffer"
-              checked={settings().mode7.useBuffer}
+              id="raycasting.useBuffer"
+              name="raycasting.useBuffer"
+              checked={settings().raycasting.useBuffer}
               onChange={handleInputChange}
               class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded-sm "
             />

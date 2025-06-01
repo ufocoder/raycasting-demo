@@ -17,7 +17,6 @@ function App() {
   return (
     <>
       <div ref={setRefOverlay} class="fixed flex items-center justify-center top-0 right-0 left-0 bottom-0 h-screen w-screen bg-color bg-gray-100">
-
         <div class="flex flex-col">
           <h1 class="mb-4 text-5xl text-center font-bold text-gray-900">
             RayCasting Demo

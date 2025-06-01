@@ -1,5 +1,5 @@
 import { createSignal, onCleanup, type Setter } from "solid-js";
-import { degreeToRadians, round } from "../lib/math";
+import { degreeToRadians } from "../lib/math";
 import { map, MAP_PLAYER_SIZE } from "../data";
 import createLoop from "../lib/loop";
 
@@ -16,6 +16,7 @@ export function useCameraControls({ setSettings }: UseCameraControlsProps) {
     let playerSin = Math.sin(degreeToRadians(camera.angle)) * camera.moveSpeed;
     let newX = camera.x + direction * playerCos;
     let newY = camera.y + direction * playerSin;
+    
     let checkX = Math.floor(
       newX + (direction * playerCos * MAP_PLAYER_SIZE) / 2
     );
@@ -28,8 +29,8 @@ export function useCameraControls({ setSettings }: UseCameraControlsProps) {
 
     return {
       ...camera,
-      x: canMoveX ? newX : round(camera.x),
-      y: canMoveY ? newY : round(camera.y),
+      x: canMoveX ? newX : camera.x,
+      y: canMoveY ? newY : camera.y,
     };
   }
 

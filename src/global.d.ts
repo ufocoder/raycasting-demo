@@ -1,14 +1,26 @@
 type Maze = number[][];
 
+interface Color {
+  r: number
+  g: number
+  b: number
+}
+
 type Texture = {
   width: number;
   height: number;
   bitmap: number[][];
-  colors: {
-    rgb: [number, number, number][];
-    hex: string[];
-  }
+  colors: Color[];
   scale: number;
+}
+
+interface Raycasting {
+  amount: number;
+  step: number;
+  textureWalls: boolean;
+  textureFloor: boolean;
+  fisheyeFix: boolean;
+  useBuffer: boolean;
 }
 
 interface Camera {
@@ -28,16 +40,6 @@ interface Ray {
 }
 
 interface Settings {
-  raycasting: {
-    amount: number;
-    step: number;
-    texture: boolean;
-    fisheyeFix: boolean;
-    interruption: boolean;
-  };
-  mode7: {
-    texture: boolean;
-    useBuffer: boolean;
-  };
+  raycasting: Raycasting;
   camera: Camera;
 }

@@ -1,3 +1,6 @@
+export const minmax = (value: number, min: number, max: number) =>
+  Math.min(max, Math.max(min, value));
+
 export function degreeToRadians(degree: number) {
   return (degree * Math.PI) / 180;
 }

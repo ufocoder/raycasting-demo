@@ -1,13 +1,17 @@
-import { createSignal, onCleanup, type Setter } from "solid-js";
+import { createSignal, onCleanup, type Accessor, type Setter } from "solid-js";
 import { degreeToRadians } from "../lib/math";
-import { map, MAP_PLAYER_SIZE } from "../data";
+import { MAP_PLAYER_SIZE } from "../data";
 import createLoop from "../lib/loop";
 
 interface UseCameraControlsProps {
+  settings: Accessor<Settings>;
   setSettings: Setter<Settings>;
 }
 
-export function useCameraControls({ setSettings }: UseCameraControlsProps) {
+export function useCameraControls({
+  settings,
+  setSettings,
+}: UseCameraControlsProps) {
   const [isMoving, setMoving] = createSignal(0);
   const [isRotating, setRotating] = createSignal(0);
 
@@ -16,7 +20,7 @@ export function useCameraControls({ setSettings }: UseCameraControlsProps) {
     let playerSin = Math.sin(degreeToRadians(camera.angle)) * camera.moveSpeed;
     let newX = camera.x + direction * playerCos;
     let newY = camera.y + direction * playerSin;
-    
+
     let checkX = Math.floor(
       newX + (direction * playerCos * MAP_PLAYER_SIZE) / 2
     );
@@ -24,8 +28,8 @@ export function useCameraControls({ setSettings }: UseCameraControlsProps) {
       newY + (direction * playerSin * MAP_PLAYER_SIZE) / 2
     );
 
-    const canMoveY = map[checkY][Math.floor(camera.x)] == 0;
-    const canMoveX = map[Math.floor(camera.y)][checkX] == 0;
+    const canMoveY = settings().maze[checkY][Math.floor(camera.x)] == 0;
+    const canMoveX = settings().maze[Math.floor(camera.y)][checkX] == 0;
 
     return {
       ...camera,
@@ -43,16 +47,16 @@ export function useCameraControls({ setSettings }: UseCameraControlsProps) {
 
   const mainLoop = createLoop(function () {
     if (isMoving()) {
-      setSettings(prev => ({
+      setSettings((prev) => ({
         ...prev,
-        camera: moveCamera(prev.camera, isMoving())
+        camera: moveCamera(prev.camera, isMoving()),
       }));
     }
 
     if (isRotating()) {
-      setSettings(prev => ({
+      setSettings((prev) => ({
         ...prev,
-        camera: rotateCamera(prev.camera, isRotating())
+        camera: rotateCamera(prev.camera, isRotating()),
       }));
     }
   });
@@ -88,7 +92,7 @@ export function useCameraControls({ setSettings }: UseCameraControlsProps) {
       case "KeyW":
       case "ArrowUp":
         setMoving(1);
-        return
+        return;
       case "KeyS":
       case "ArrowDown":
         setMoving(-1);

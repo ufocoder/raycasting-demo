@@ -1,22 +1,39 @@
-import { type Component, onMount, createEffect, type Accessor } from "solid-js";
 import {
-  map,
+  type Component,
+  onMount,
+  createEffect,
+  type Accessor,
+  createSignal,
+  onCleanup,
+  type Setter,
+} from "solid-js";
+import {
   COLOR_MAP_PATH,
   COLOR_MAP_PLAYER,
   COLOR_MAP_VISION,
   COLOR_MAP_WALL,
   MAP_CELL_SIZE,
   MAP_PLAYER_SIZE,
+  COLOR_MAP_POINTER,
 } from "../data";
 import { calculateRays } from "../lib/raycasting";
 import CanvasDefault from "../lib/canvas/CanvasDefault";
 
-interface RendererProps {
-  settings: Accessor<Settings>;
+interface Position {
+  x: number;
+  y: number;
 }
 
-function drawMaze(canvas: CanvasDefault) {
-  map.forEach((row, y) => {
+function setValueInMaze(maze: Maze, x: number, y: number, value: number) {
+  return maze.map((row, rowIndex) =>
+    rowIndex === y
+      ? row.map((cell, colIndex) => (colIndex === x ? value : cell))
+      : [...row]
+  );
+}
+
+function drawMaze(canvas: CanvasDefault, settings: Settings) {
+  settings.maze.forEach((row, y) => {
     row.forEach((cell, x) => {
       canvas.drawRect({
         x: x * MAP_CELL_SIZE,
@@ -36,10 +53,10 @@ const resizeCoords = ({ x, y }: { x: number; y: number }) => ({
 
 async function drawVision(canvas: CanvasDefault, settings: Settings) {
   const points = calculateRays(settings).map(resizeCoords);
-  
+
   canvas.drawPolygon({
     points: [resizeCoords(settings.camera), ...points],
-    color: COLOR_MAP_VISION
+    color: COLOR_MAP_VISION,
   });
 }
 
@@ -52,25 +69,89 @@ function drawCamera(canvas: CanvasDefault, camera: Camera) {
   });
 }
 
-const Renderer: Component<RendererProps> = ({ settings }) => {
-  let ref: HTMLCanvasElement;
-  let canvas: CanvasDefault;
+function drawOverlay(canvas: CanvasDefault, { x, y }: Position) {
+  canvas.clear();
+  if (x < 0 || y < 0) {
+    return;
+  }
+  canvas.drawRect({
+    x: x * MAP_CELL_SIZE,
+    y: y * MAP_CELL_SIZE,
+    width: MAP_CELL_SIZE,
+    height: MAP_CELL_SIZE,
+    color: COLOR_MAP_POINTER,
+  });
+}
+
+interface RendererProps {
+  settings: Accessor<Settings>;
+  setSettings: Setter<Settings>;
+}
+
+const Renderer: Component<RendererProps> = ({ settings, setSettings }) => {
+  const [pointerPosition, setPointerPosition] = createSignal<Position>({
+    x: -1,
+    y: -1,
+  });
+
+  let refOverlay: HTMLCanvasElement;
+  let refContainer: HTMLCanvasElement;
+
+  let canvasOverlay: CanvasDefault;
+  let canvasContainer: CanvasDefault;
 
   const render = () => {
-    if (!ref!) {
+    if (!refContainer!) {
       return;
     }
 
-    drawMaze(canvas);
-    drawVision(canvas, settings());
-    drawCamera(canvas, settings().camera);
+    drawMaze(canvasContainer, settings());
+    drawVision(canvasContainer, settings());
+    drawCamera(canvasContainer, settings().camera);
+    drawOverlay(canvasOverlay, pointerPosition());
+  };
+
+  const handleDocumentPointermove = (e: PointerEvent) => {
+    if (!refOverlay!) {
+      return;
+    }
+
+    const rect = refOverlay.getBoundingClientRect();
+
+    const x = Math.floor((e.clientX - rect.x) / MAP_CELL_SIZE);
+    const y = Math.floor((e.clientY - rect.y) / MAP_CELL_SIZE);
+
+    setPointerPosition({ x, y });
+  };
+
+  const handleDocumentPointerdown = (e: PointerEvent) => {
+    if (!refOverlay!) {
+      return;
+    }
+
+    const rect = refOverlay.getBoundingClientRect();
+
+    const x = Math.floor((e.clientX - rect.x) / MAP_CELL_SIZE);
+    const y = Math.floor((e.clientY - rect.y) / MAP_CELL_SIZE);
+
+    setSettings((prev) => ({
+      ...prev,
+      maze: setValueInMaze(prev.maze, x, y, prev.maze[y][x] == 0 ? 1 : 0),
+    }));
   };
 
   onMount(() => {
-    ref!.width = map[0].length * MAP_CELL_SIZE;
-    ref!.height = map.length * MAP_CELL_SIZE;
+    document.addEventListener("pointermove", handleDocumentPointermove);
+    document.addEventListener("pointerdown", handleDocumentPointerdown);
 
-    canvas = new CanvasDefault(ref!);
+    refOverlay!.width = settings().maze[0].length * MAP_CELL_SIZE;
+    refOverlay!.height = settings().maze.length * MAP_CELL_SIZE;
+
+    refContainer!.width = settings().maze[0].length * MAP_CELL_SIZE;
+    refContainer!.height = settings().maze.length * MAP_CELL_SIZE;
+
+    canvasOverlay = new CanvasDefault(refOverlay!);
+    canvasContainer = new CanvasDefault(refContainer!);
 
     render();
   });
@@ -79,7 +160,17 @@ const Renderer: Component<RendererProps> = ({ settings }) => {
     render();
   });
 
-  return <canvas ref={ref!} class="border border-gray-300" />;
+  onCleanup(() => {
+    document.removeEventListener("pointerdown", handleDocumentPointerdown);
+    document.removeEventListener("pointermove", handleDocumentPointermove);
+  });
+
+  return (
+    <div class="relative">
+      <canvas ref={refOverlay!} class="border border-gray-300 absolute" />
+      <canvas ref={refContainer!} class="border border-gray-300 " />
+    </div>
+  );
 };
 
 export default Renderer;

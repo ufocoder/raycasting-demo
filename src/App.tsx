@@ -11,17 +11,22 @@ function App() {
   const [settings, setSettings] = createSignal<Settings>(defaultSettings);
   const [refOverlay, setRefOverlay] = createSignal<HTMLDivElement>();
 
-  useCameraControls({ setSettings });
-  useFadeOutLayout({ refOverlay })
+  useCameraControls({ settings, setSettings });
+  useFadeOutLayout({ refOverlay });
 
   return (
     <>
-      <div ref={setRefOverlay} class="fixed flex items-center justify-center top-0 right-0 left-0 bottom-0 h-screen w-screen bg-color bg-gray-100">
+      <div
+        ref={setRefOverlay}
+        class="fixed flex items-center justify-center top-0 right-0 left-0 bottom-0 h-screen w-screen bg-color bg-gray-100"
+      >
         <div class="flex flex-col">
           <h1 class="mb-4 text-5xl text-center font-bold text-gray-900">
             RayCasting Demo
           </h1>
-          <p class="mb-6 text-base text-center font-normal text-gray-500">Learn and experiment with raycasting rendering</p>
+          <p class="mb-6 text-base text-center font-normal text-gray-500">
+            Learn and experiment with raycasting rendering
+          </p>
         </div>
       </div>
       <div class="flex flex-col gap-2">
@@ -34,7 +39,7 @@ function App() {
               <FramesMetric />
             </div>
             <p class="text-center text-xl font-normal text-gray-500">
-              Camera control via {" "}
+              Camera control via{" "}
               <kbd class="p-1.5 py-1 text-xs font-semibold text-gray-800 bg-gray-100 border border-gray-400 rounded">
                 W
               </kbd>{" "}
@@ -52,7 +57,7 @@ function App() {
           </div>
           <div>
             <div class="bg-white rounded mt-4 shadow-lg mb-2">
-              <Renderer2D settings={settings} />
+              <Renderer2D settings={settings} setSettings={setSettings} />
             </div>
             <div class="bg-white rounded mt-4 shadow-lg">
               <FormSettings settings={settings} setSettings={setSettings} />

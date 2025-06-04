@@ -1,7 +1,7 @@
-import { map, SCREEN_HEIGHT, SCREEN_WIDTH } from "../data";
+import { SCREEN_HEIGHT, SCREEN_WIDTH } from "../data";
 import { degreeToRadians } from "./math";
 
-export function calculateRays({ camera, raycasting }: Settings): Ray[] {
+export function calculateRays({ maze, camera, raycasting }: Settings): Ray[] {
   const maxDistance = Math.max(SCREEN_WIDTH, SCREEN_HEIGHT);
   const incrementAngle = camera.fov / Math.min(SCREEN_WIDTH, raycasting.amount);
 
@@ -25,7 +25,7 @@ export function calculateRays({ camera, raycasting }: Settings): Ray[] {
     while (wall === 0 || ray.x > maxDistance || ray.y > maxDistance) {
       ray.x += rayCos;
       ray.y += raySin;
-      wall = map[Math.floor(ray.y)][Math.floor(ray.x)]!;
+      wall = maze[Math.floor(ray.y)][Math.floor(ray.x)]!;
     }
 
     let distance = Math.sqrt(

@@ -42,4 +42,5 @@ interface Ray {
 interface Settings {
   raycasting: Raycasting;
   camera: Camera;
+  maze: Maze;
 }

@@ -1,3 +1,4 @@
+import { minmax } from "../math";
 import type {
   BaseCanvas,
   DrawLineProps,
@@ -10,9 +11,6 @@ interface DrawPixelProps {
   y: number;
   color: Color;
 }
-
-const minmax = (value: number, min: number, max: number) =>
-  Math.min(max, Math.max(min, value));
 
 export default class CanvasBuffered implements BaseCanvas {
   readonly width: number;

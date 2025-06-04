@@ -83,7 +83,7 @@ function drawFloors(
 
     const wallHeight = Math.floor(SCREEN_HEIGHT / 2 / ray.distance);
     const halfHeight = SCREEN_HEIGHT / 2;
-    const start = halfHeight + wallHeight;
+    const start = halfHeight + 1; + wallHeight;
 
     const rayCos = Math.cos(degreeToRadians(rayAngle));
     const raySin = Math.sin(degreeToRadians(rayAngle));
